@@ -1,7 +1,9 @@
 import bpy
-from bpy.types import Depsgraph, Object
+from bpy.types import Object
 
+from .debug import DEBUG_measure_execution_time
 from .hashes import get_vertices_hash
+from .mesh import create_collapsed_mesh, create_duplicate_model
 
 
 def apply_modifiers_with_shapekeys(object: Object):
@@ -9,62 +11,69 @@ def apply_modifiers_with_shapekeys(object: Object):
         print(f"No shapekeys found on {object.name}! Skipping")
         return
 
-    shaped_objects = {}
-
     # Hashes the rest pose to compare with the shapekeys
     object.show_only_shape_key = True
     object.active_shape_key_index = 0
-    base_hash = get_vertices_hash(object.data.vertices)
+    reference_hash = get_vertices_hash(object.data.vertices)
 
-    despgraph = bpy.context.evaluated_depsgraph_get()
-    collapsed_object = create_collapsed_mesh(despgraph, object, "collapsed")
+    with DEBUG_measure_execution_time("Shapekey application"):
+        shaped_objects = {}
+        # Create a new object for each shapekey using hashes (for fast comparison), and pin it.
+        for index, shape_key in enumerate(object.data.shape_keys.key_blocks):
+            object.active_shape_key_index = index
+            shaped_hash = get_vertices_hash(shape_key.points)
 
-    # TODO: Duplicate all and collapse on a single depsgraph update
-    # For each shapekey, create a new object and apply modifiers individually
-    for index, shape_key in enumerate(object.data.shape_keys.key_blocks):
-        object.active_shape_key_index = index
-        shaped_hash = get_vertices_hash(shape_key.points)
+            print(reference_hash, shaped_hash)
 
-        print(base_hash, shaped_hash)
+            # Only create objects for shapekeys with actual changes
+            if reference_hash != shaped_hash:
+                shaped_object = create_duplicate_model(object, shape_key.name)
+                bpy.context.collection.objects.link(shaped_object)
 
-        # Only create objects for shapekeys with actual changes
-        if base_hash != shaped_hash:
-            despgraph.update()
-            shaped_object = create_collapsed_mesh(despgraph, object, shape_key.name)
+                shaped_objects.setdefault(shape_key.name, shaped_object)
+            else:
+                shaped_objects.setdefault(shape_key.name, None)
 
-            shaped_objects.setdefault(shape_key.name, shaped_object)
-        else:
-            shaped_objects.setdefault(shape_key.name, None)
+        object.active_shape_key_index = 0
+        depsgraph = bpy.context.evaluated_depsgraph_get()
 
-    # Adds shapekeys into the new base object
-    for name, shape_object in shaped_objects.items():
-        shape_key = collapsed_object.shape_key_add(name=name)
-        if not shape_object:
-            print(f"Shapekey {name} has no changes! Skipping.")
-            continue
-        if not len(shape_key.points) == len(shape_object.data.vertices):
-            print(f"Mismatching vertex count for shapekey {name}! Shapekey lost.")
-            continue
+        reference_mesh = create_collapsed_mesh(depsgraph, object)
+        collapsed_reference = bpy.data.objects.new(
+            reference_mesh.name + "_collapsed", reference_mesh
+        )
+        collapsed_reference.matrix_world = object.matrix_world
+        bpy.context.collection.objects.link(collapsed_reference)
 
-        for index, vertex in enumerate(shape_key.points):
-            vertex.co = shape_object.data.vertices[index].co
+        collapsed_objects = []
+        # Create a new object for each duplicate object with the shapekey and modifiers applied, and then send the data to the reference object's shapekey
+        for name, shaped_object in shaped_objects.items():
+            shape_key = collapsed_reference.shape_key_add(name=name)
+            if not shaped_object:
+                print(f"Shapekey {name} has no changes! Skipping.")
+                continue
 
-    bpy.context.collection.objects.link(collapsed_object)
+            collapsed_mesh = create_collapsed_mesh(depsgraph, shaped_object)
+            collapsed_objects.append(collapsed_mesh)
+
+            if not len(shape_key.points) == len(collapsed_mesh.vertices):
+                print(f"Mismatching vertex count for shapekey {name}! Shapekey lost.")
+                continue
+
+            for index, vertex in enumerate(shape_key.points):
+                vertex.co = collapsed_mesh.vertices[index].co
+
+            # While this may seem counterintuitive, it's actually very fast since the depsgraph is only called one time,
+            # as opposed to calling it each time you create a duplicate with the shapekey and modifiers applied.
 
     # Removes leftovers
     for shaped_object in shaped_objects.values():
         if not shaped_object:
             continue
-
         bpy.data.meshes.remove(shaped_object.data)
 
-    object.active_shape_key_index = 0
-    return collapsed_object
+    for collapsed_mesh in collapsed_objects:
+        if not collapsed_mesh:
+            continue
+        bpy.data.meshes.remove(collapsed_mesh)
 
-
-def create_collapsed_mesh(despgraph: Depsgraph, object: Object, suffix: str):
-    evaluated_mesh = object.evaluated_get(despgraph).data.copy()
-    collapsed_object = bpy.data.objects.new(object.name + f"_{suffix}", evaluated_mesh)
-
-    collapsed_object.matrix_world = object.matrix_world
-    return collapsed_object
+    return collapsed_reference
