@@ -10,15 +10,16 @@ def apply_modifiers_with_shapekeys(object: Object):
         return
 
     shaped_objects = {}
+
     # Hashes the rest pose to compare with the shapekeys
     object.show_only_shape_key = True
     object.active_shape_key_index = 0
     base_hash = get_vertices_hash(object.data.vertices)
 
-    # Defining despgraph here is unbeliveably faster than doing it inside the collapse function
     despgraph = bpy.context.evaluated_depsgraph_get()
     collapsed_object = create_collapsed_mesh(despgraph, object, "collapsed")
 
+    # TODO: Duplicate all and collapse on a single depsgraph update
     # For each shapekey, create a new object and apply modifiers individually
     for index, shape_key in enumerate(object.data.shape_keys.key_blocks):
         object.active_shape_key_index = index
@@ -28,8 +29,9 @@ def apply_modifiers_with_shapekeys(object: Object):
 
         # Only create objects for shapekeys with actual changes
         if base_hash != shaped_hash:
+            despgraph.update()
             shaped_object = create_collapsed_mesh(despgraph, object, shape_key.name)
-            bpy.context.collection.objects.link(shaped_object)
+
             shaped_objects.setdefault(shape_key.name, shaped_object)
         else:
             shaped_objects.setdefault(shape_key.name, None)
@@ -45,19 +47,18 @@ def apply_modifiers_with_shapekeys(object: Object):
             continue
 
         for index, vertex in enumerate(shape_key.points):
-            print(shape_object.data.vertices[index].co, vertex.co)
             vertex.co = shape_object.data.vertices[index].co
 
     bpy.context.collection.objects.link(collapsed_object)
 
-    # # Removes leftovers
-    # for shaped_object in shaped_objects.values():
-    #     if not shaped_object:
-    #         continue
+    # Removes leftovers
+    for shaped_object in shaped_objects.values():
+        if not shaped_object:
+            continue
 
-    #     bpy.data.meshes.remove(shaped_object.data)
+        bpy.data.meshes.remove(shaped_object.data)
 
-    # object.active_shape_key_index = 0
+    object.active_shape_key_index = 0
     return collapsed_object
 
 
