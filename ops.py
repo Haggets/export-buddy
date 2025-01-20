@@ -9,7 +9,8 @@ class EB_OT_test(Operator):
     bl_label = "Test Operator"
 
     def execute(self, context):
-        apply_modifiers_with_shapekeys(context.object)
+        apply_modifiers_with_shapekeys(context.object, ["Armature"])
+        self.report({"INFO"}, "Modifiers applied successfully.")
         return {"FINISHED"}
 
 

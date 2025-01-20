@@ -1,13 +1,9 @@
 from bpy.types import Depsgraph, Object
 
 
-def create_duplicate_model(object: Object, suffix: str):
-    duplicate_mesh = object.data.copy()
-    duplicate_mesh.name = f"{object.data.name}_{suffix}"
-
-    duplicate_object = object.copy()
+def create_linked_duplicate(object: Object, suffix: str):
+    duplicate_object: Object = object.copy()
     duplicate_object.name = f"{object.name}_{suffix}"
-    duplicate_object.data = duplicate_mesh
 
     duplicate_object.matrix_world = object.matrix_world
     return duplicate_object
