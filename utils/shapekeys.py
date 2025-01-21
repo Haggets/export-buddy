@@ -1,5 +1,5 @@
 import bpy
-from bpy.types import Object
+from bpy.types import Modifier, Object
 
 from .debug import DEBUG_measure_execution_time
 from .hashes import get_vertices_hash
@@ -7,17 +7,42 @@ from .mesh import create_collapsed_mesh, create_linked_duplicate
 from .others import is_attribute_read_only
 
 
-def apply_modifiers_with_shapekeys(object: Object, skipped_modifiers: set = None):
+def check_modifiers(object: Object):
+    for modifier in object.modifiers:
+        if modifier.type == "BEVEL" and modifier.limit_method == "ANGLE":
+            return (
+                {"WARNING"},
+                "Bevel modifiers with 'Angle' limit are not supported, many shapekeys may get lost.",
+            )
+
+    return None, None
+
+
+def copy_with_modifiers_applied(
+    object: Object, unapplied_modifiers: list[Modifier | None] = []
+) -> Object:
+    # TODO: skip if nothing needed to apply
     if not getattr(object.data, "shape_keys"):
         print(f"No shapekeys found on {object.name}! Skipping")
-        return
+        return object
 
-    for modifier_name in skipped_modifiers:
-        skipped_mod = object.modifiers.get(modifier_name)
-        if not skipped_mod:
+    modifiers: list[Modifier] = object.modifiers[:]
+    for unapplied_modifier in unapplied_modifiers:
+        try:
+            modifiers.remove(unapplied_modifier)
+        except ValueError:
+            pass
+
+    if not len(modifiers):
+        print(f"No modifiers to apply on {object.name}! Skipping")
+        return object
+
+    for modifier_name in unapplied_modifiers:
+        unapplied_mod = object.modifiers.get(modifier_name)
+        if not unapplied_mod:
             continue
 
-        skipped_mod.show_viewport = False
+        unapplied_mod.show_viewport = False
 
     # Hashes the rest pose to compare with the shapekeys
     object.show_only_shape_key = True
@@ -75,21 +100,21 @@ def apply_modifiers_with_shapekeys(object: Object, skipped_modifiers: set = None
     print("Finished applying shapekeys.")
 
     # Restores skipped modifiers
-    for modifier_name in skipped_modifiers:
-        skipped_mod = object.modifiers.get(modifier_name)
-        if not skipped_mod:
+    for modifier_name in unapplied_modifiers:
+        unapplied_mod = object.modifiers.get(modifier_name)
+        if not unapplied_mod:
             continue
 
-        skipped_mod.show_viewport = True
+        unapplied_mod.show_viewport = True
 
         modifier = collapsed_reference.modifiers.new(
-            name=modifier_name, type=skipped_mod.type
+            name=modifier_name, type=unapplied_mod.type
         )
-        for key in dir(skipped_mod):
-            if is_attribute_read_only(skipped_mod, key):
+        for key in dir(unapplied_mod):
+            if is_attribute_read_only(unapplied_mod, key):
                 continue
 
-            setattr(modifier, key, getattr(skipped_mod, key))
+            setattr(modifier, key, getattr(unapplied_mod, key))
 
     # Removes leftovers
     for shaped_object in shaped_objects.values():
