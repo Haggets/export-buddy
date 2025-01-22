@@ -1,5 +1,5 @@
 import bpy
-from bpy.types import Modifier, Object
+from bpy.types import Modifier, Object, Operator
 
 from .debug import DEBUG_measure_execution_time
 from .hashes import get_vertices_hash
@@ -7,26 +7,24 @@ from .mesh import create_collapsed_mesh, create_linked_duplicate
 from .others import is_attribute_read_only
 
 
-def check_modifiers(object: Object):
+def check_modifiers(self: Operator, object: Object):
     """Check if the object has any unsupported modifiers or settings"""
     for modifier in object.modifiers:
         if modifier.type == "BEVEL" and modifier.limit_method == "ANGLE":
-            return (
-                {"WARNING"},
-                "Bevel modifiers with 'Angle' limit are not supported, many shapekeys may get lost.",
+            self.report(
+                {"ERROR"},
+                f"{object.name}: Bevel modifiers with 'Angle' limit are not supported, many shapekeys may get lost.",
             )
 
         # Decimate modifier is a special case
         if modifier.type == "DECIMATE":
             if modifier.decimate_type != "DISSOLVE":
-                return (
+                self.report(
                     {"WARNING"},
                     "Decimate modifiers without 'Dissolve' type are not supported.",
                 )
 
             modifier.show_viewport = False
-
-    return None, None
 
 
 def transfer_modifiers(source: Object, target: Object):

@@ -12,8 +12,7 @@ class EB_PT_mainpanel(Panel):
     def draw(self, context):
         layout = self.layout
         col = layout.column(align=True)
-        col.label(text="Test!")
-        col.operator("eb.test")
+        col.operator("eb.apply_and_merge")
 
 
 def register_ui():
