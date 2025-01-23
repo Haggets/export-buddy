@@ -14,8 +14,8 @@ def linked_duplicate_per_shapekey(object: Object) -> dict[str, Object | None]:
     reference_hash = get_vertices_hash(object.data.vertices)
 
     shaped_objects = {}
-    for index, shape_key in enumerate(object.data.shape_keys.key_blocks):
-        object.active_shape_key_index = index
+    for i, shape_key in enumerate(object.data.shape_keys.key_blocks):
+        object.active_shape_key_index = i
         shaped_hash = get_vertices_hash(shape_key.points)
         print(f"Base hash: {reference_hash}, {shape_key.name} hash: {shaped_hash}")
 
@@ -46,6 +46,7 @@ def insert_shapekeys_from_duplicates(
 
         collapsed_mesh = shaped_object.evaluated_get(depsgraph).to_mesh()
 
+        print(len(collapsed_mesh.vertices), len(shape_key.points))
         if not len(shape_key.points) == len(collapsed_mesh.vertices):
             print(f"Mismatching vertex count for shapekey {name}! Shapekey lost.")
             continue
@@ -62,7 +63,7 @@ def insert_shapekeys_from_duplicates(
 
 
 def copy_with_modifiers_applied(
-    object: Object, unapplied_modifiers: list[Modifier | None] = []
+    object: Object, unapplied_modifiers: list[Modifier] | None = None
 ) -> Object:
     applied_modifiers: list[Modifier] = object.modifiers[:]
     for modifier in unapplied_modifiers:
@@ -75,8 +76,6 @@ def copy_with_modifiers_applied(
             pass
 
         modifier.show_viewport = False
-
-    print_colored(applied_modifiers, color_code=33)
 
     # No modifiers to apply
     if not len(applied_modifiers):
@@ -111,10 +110,18 @@ def copy_with_modifiers_applied(
         insert_shapekeys_from_duplicates(collapsed_reference, shaped_objects)
 
     handle_decimate_modifier(collapsed_reference, applied_modifiers)
-    print_colored("Finished applying shapekeys.", color_code=32)
+    print_colored(
+        f"Finished applying shapekeys to {collapsed_reference.name}", color_code=32
+    )
 
     # Restores skipped modifiers
     transfer_unapplied_modifiers(collapsed_reference, unapplied_modifiers)
+
+    for modifier in unapplied_modifiers:
+        if not modifier:
+            continue
+
+        modifier.show_viewport = True
 
     # Removes leftovers
     for shaped_object in shaped_objects.values():
