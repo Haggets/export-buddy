@@ -17,9 +17,14 @@ class EB_OT_test(Operator):
                 continue
 
             skipped_modifiers = []
-            for mod in object.modifiers:
-                if mod.type == "ARMATURE":
-                    skipped_modifiers.append(mod)
+            for modifier in object.modifiers:
+                if not modifier.show_viewport:
+                    skipped_modifiers.append(modifier)
+                    continue
+
+                if modifier.type == "ARMATURE":
+                    skipped_modifiers.append(modifier)
+                    continue
 
             check_modifiers(self, object)
 
