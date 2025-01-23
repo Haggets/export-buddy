@@ -2,7 +2,8 @@ from bpy.types import Operator
 from bpy.utils import register_class, unregister_class
 
 from .utils.mesh import merge_meshes
-from .utils.shapekeys import check_modifiers, copy_with_modifiers_applied
+from .utils.modifiers import check_modifiers
+from .utils.shapekeys import copy_with_modifiers_applied
 
 
 class EB_OT_test(Operator):
