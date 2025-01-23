@@ -4,6 +4,7 @@ from bpy.utils import register_class, unregister_class
 
 from .utils.mesh import merge_meshes
 from .utils.modifiers import check_incompatible_modifiers
+from .utils.scene import focus_object
 from .utils.shapekeys import copy_with_modifiers_applied
 
 
@@ -23,6 +24,7 @@ class EB_OT_apply_and_merge(Operator):
         return True
 
     def execute(self, context):
+        active_object: Object = context.object
         active_reference = None
         collapsed_objects = []
         for object in context.selected_objects:
@@ -31,6 +33,7 @@ class EB_OT_apply_and_merge(Operator):
 
             duplicate_object: Object = object.copy()
             duplicate_object.name = object.name + "_copy"
+            object.hide_set(True)
 
             skipped_modifiers = []
             for modifier in duplicate_object.modifiers:
@@ -48,16 +51,21 @@ class EB_OT_apply_and_merge(Operator):
                 duplicate_object, skipped_modifiers
             )
 
-            if collapsed_object.name.replace("_collapsed", "") == context.object.name:
+            if collapsed_object.name.replace("_collapsed", "") == active_object.name:
                 active_reference = collapsed_object
                 continue
 
             collapsed_objects.append(collapsed_object)
-
             bpy.data.objects.remove(duplicate_object)
 
         if len(collapsed_objects) > 1:
             merge_meshes(active_reference, collapsed_objects)
+
+        # Shouldn't happen
+        if not active_reference:
+            return {"FINISHED"}
+
+        focus_object(active_reference)
 
         self.report({"INFO"}, "Modifiers applied successfully.")
 
