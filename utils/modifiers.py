@@ -17,17 +17,19 @@ def check_incompatible_modifiers(self: Operator, object: Object):
 
         # Decimate modifier is a special case
         if modifier.type == "DECIMATE":
-            if modifier.decimate_type != "DISSOLVE":
+            if modifier.decimate_type != "COLLAPSE":
                 self.report(
                     {"WARNING"},
                     f"{object.name}: Decimate modifiers without 'Dissolve' type are not supported.",
                 )
+
                 modifier.show_viewport = False
 
 
 def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
     """Apply decimate modifier to object"""
 
+    decimate_modifier = None
     for modifier in modifiers:
         if modifier.type != "DECIMATE":
             continue
@@ -63,8 +65,6 @@ def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
     focus_object(active_object)
     select_objects(selected_objects)
 
-    # object.modifiers.remove(modifier)
-
 
 def transfer_unapplied_modifiers(
     target: Object, unapplied_modifiers: list[Modifier | None]
@@ -76,11 +76,11 @@ def transfer_unapplied_modifiers(
 
         modifier.show_viewport = True
 
-        modifier = target.modifiers.new(name=modifier.name, type=modifier.type)
+        new_modifier = target.modifiers.new(name=modifier.name, type=modifier.type)
         for key in dir(modifier):
             if is_attribute_read_only(modifier, key):
                 continue
 
-            setattr(modifier, key, getattr(modifier, key))
+            setattr(new_modifier, key, getattr(modifier, key))
 
     return target

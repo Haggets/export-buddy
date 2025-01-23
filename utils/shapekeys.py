@@ -17,7 +17,7 @@ def linked_duplicate_per_shapekey(object: Object) -> dict[str, Object | None]:
     for index, shape_key in enumerate(object.data.shape_keys.key_blocks):
         object.active_shape_key_index = index
         shaped_hash = get_vertices_hash(shape_key.points)
-        print(f"Base: {reference_hash}, {shape_key.name}: {shaped_hash}")
+        print(f"Base hash: {reference_hash}, {shape_key.name} hash: {shaped_hash}")
 
         # Only create objects for shapekeys with actual changes
         if reference_hash != shaped_hash:
@@ -82,7 +82,7 @@ def copy_with_modifiers_applied(
     if not len(applied_modifiers):
         print(f"No modifiers to apply on {object.name}!")
         collapsed_reference = bpy.data.objects.new(
-            object.name + "_collapsed", object.data
+            object.name.replace("_copy", "_collapsed"), object.data
         )
         collapsed_reference.matrix_world = object.matrix_world
         bpy.context.collection.objects.link(collapsed_reference)
