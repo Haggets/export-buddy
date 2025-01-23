@@ -44,6 +44,8 @@ def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
     focus_object(object)
     bpy.context.view_layer.objects.active = object
     change_mode("EDIT")
+    bpy.ops.mesh.select_all(action="SELECT")
+
     if decimate_modifier.vertex_group:
         vertex_group = object.vertex_groups.get(decimate_modifier.vertex_group)
         object.vertex_groups.active = vertex_group
