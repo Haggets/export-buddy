@@ -1,14 +1,25 @@
-from bpy.types import Operator
+from bpy.types import Context, Operator
 from bpy.utils import register_class, unregister_class
 
 from .utils.mesh import merge_meshes
-from .utils.modifiers import check_modifiers
+from .utils.modifiers import check_incompatible_modifiers
 from .utils.shapekeys import copy_with_modifiers_applied
 
 
 class EB_OT_test(Operator):
     bl_idname = "eb.apply_and_merge"
     bl_label = "Apply Modifiers & Merge to Active"
+
+    @classmethod
+    def poll(cls, context: Context):
+        if not context.object:
+            return
+        if not context.selected_objects:
+            return
+        if context.object.type != "MESH":
+            return
+
+        return True
 
     def execute(self, context):
         active_reference = None
@@ -27,7 +38,7 @@ class EB_OT_test(Operator):
                     skipped_modifiers.append(modifier)
                     continue
 
-            check_modifiers(self, object)
+            check_incompatible_modifiers(self, object)
 
             collapsed_object = copy_with_modifiers_applied(object, skipped_modifiers)
 
