@@ -1,5 +1,5 @@
 import bpy
-from bpy.types import Modifier, Object
+from bpy.types import Modifier, Object, Operator
 
 from .debug import DEBUG_measure_execution_time, print_colored
 from .hashes import get_vertices_hash
@@ -9,8 +9,6 @@ from .modifiers import handle_decimate_modifier, transfer_unapplied_modifiers
 
 def linked_duplicate_per_shapekey(object: Object) -> dict[str, Object | None]:
     """Create a new (pinned) linked object for each shapekey using hashes (for fast comparison)"""
-    object.show_only_shape_key = True
-    object.active_shape_key_index = 0
     reference_hash = get_vertices_hash(object.data.vertices)
 
     shaped_objects = {}
@@ -33,11 +31,11 @@ def linked_duplicate_per_shapekey(object: Object) -> dict[str, Object | None]:
 
 
 def insert_shapekeys_from_duplicates(
-    target_object: Object, shaped_objects: dict[str, Object | None]
+    self: Operator, target_object: Object, shaped_objects: dict[str, Object | None]
 ):
     """Create a new object for each duplicate object with the shapekey and modifiers applied, and then send the data to the reference object's shapekey"""
     depsgraph = bpy.context.evaluated_depsgraph_get()
-
+    shapekeys_lost = []
     for name, shaped_object in shaped_objects.items():
         shape_key = target_object.shape_key_add(name=name)
         if not shaped_object:
@@ -48,6 +46,7 @@ def insert_shapekeys_from_duplicates(
 
         print(len(collapsed_mesh.vertices), len(shape_key.points))
         if not len(shape_key.points) == len(collapsed_mesh.vertices):
+            shapekeys_lost.append(name)
             print(f"Mismatching vertex count for shapekey {name}! Shapekey lost.")
             continue
 
@@ -61,9 +60,12 @@ def insert_shapekeys_from_duplicates(
         # While this may seem counterintuitive, it's actually very fast since the depsgraph is only called one time,
         # as opposed to calling it each time you create a duplicate with the shapekey and modifiers applied.
 
+    if len(shapekeys_lost):
+        self.report({"ERROR"}, f"Shapekeys lost: {', '.join(shapekeys_lost) }")
+
 
 def copy_with_modifiers_applied(
-    object: Object, unapplied_modifiers: list[Modifier] | None = None
+    self: Operator, object: Object, unapplied_modifiers: list[Modifier] | None = None
 ) -> Object:
     applied_modifiers: list[Modifier] = object.modifiers[:]
     for modifier in unapplied_modifiers:
@@ -79,9 +81,9 @@ def copy_with_modifiers_applied(
 
     # No modifiers to apply
     if not len(applied_modifiers):
-        print(f"No modifiers to apply on {object.name}!")
+        self.report({"WARNING"}, f"No modifiers to apply on {object.name}!")
         collapsed_reference = bpy.data.objects.new(
-            object.name.replace("_copy", "_collapsed"), object.data
+            object.name + "_collapsed", object.data
         )
         collapsed_reference.matrix_world = object.matrix_world
         bpy.context.collection.objects.link(collapsed_reference)
@@ -90,12 +92,17 @@ def copy_with_modifiers_applied(
 
         return collapsed_reference
 
+    object.show_only_shape_key = True
+    object.active_shape_key_index = 0
     collapsed_reference = copy_collapsed_basis(object)
     bpy.context.collection.objects.link(collapsed_reference)
 
     # No shapekeys
     if not getattr(object.data, "shape_keys"):
-        print(f"No shapekeys found on {object.name}! Applying modifiers on basis.")
+        self.report(
+            {"INFO"},
+            f"No modifiers to apply on {object.name}! Applying modifiers on basis.",
+        )
         transfer_unapplied_modifiers(collapsed_reference, unapplied_modifiers)
 
         handle_decimate_modifier(collapsed_reference, applied_modifiers)
@@ -107,7 +114,7 @@ def copy_with_modifiers_applied(
         shaped_objects = linked_duplicate_per_shapekey(object)
 
     with DEBUG_measure_execution_time("Inserting shapekeys"):
-        insert_shapekeys_from_duplicates(collapsed_reference, shaped_objects)
+        insert_shapekeys_from_duplicates(self, collapsed_reference, shaped_objects)
 
     handle_decimate_modifier(collapsed_reference, applied_modifiers)
     print_colored(

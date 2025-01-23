@@ -10,20 +10,28 @@ def check_incompatible_modifiers(self: Operator, object: Object):
     for modifier in object.modifiers:
         if modifier.type == "BEVEL" and modifier.limit_method == "ANGLE":
             self.report(
-                {"WARNING"},
-                f"{object.name}: Bevel modifiers with 'Angle' limit are not supported.",
+                {"ERROR"},
+                f"{object.name}: Bevel modifiers with 'Angle' limit are not supported. Shapekeys may be lost.",
             )
-            modifier.show_viewport = False
+            continue
 
         # Decimate modifier is a special case
         if modifier.type == "DECIMATE":
             if modifier.decimate_type != "COLLAPSE":
                 self.report(
-                    {"WARNING"},
+                    {"ERROR"},
                     f"{object.name}: Decimate modifiers without 'Dissolve' type are not supported.",
                 )
 
                 modifier.show_viewport = False
+                continue
+
+        if modifier.type == "WELD":
+            self.report(
+                {"ERROR"},
+                f"{object.name}: Weld modifiers causes issues with big distance values. Shapekeys may be lost",
+            )
+            continue
 
 
 def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
