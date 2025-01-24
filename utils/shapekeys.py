@@ -128,9 +128,6 @@ def copy_with_modifiers_applied(
     # Restores skipped modifiers
     transfer_unapplied_modifiers(collapsed_reference, unapplied_modifiers)
 
-    for modifier in unapplied_modifiers:
-        modifier.show_viewport = True
-
     if decimate_modifier:
         decimate_modifier.show_viewport = True
 

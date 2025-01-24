@@ -37,6 +37,7 @@ def check_incompatible_modifiers(self: Operator, object: Object):
 def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
     """Apply decimate modifier to object"""
     # TODO: handle multiple ones
+    # TODO: handle unsubdivide decimate
     decimate_modifier = None
     for modifier in modifiers:
         if modifier.type != "DECIMATE":
@@ -83,6 +84,10 @@ def transfer_unapplied_modifiers(target: Object, unapplied_modifiers: list[Modif
     for modifier in unapplied_modifiers:
         if not modifier:
             continue
+
+        # TODO: find a more elegant method for not unhiding certain modifiers
+        if modifier.type == "ARMATURE":
+            modifier.show_viewport = True
 
         new_modifier = target.modifiers.new(name=modifier.name, type=modifier.type)
         transfer_attributes(modifier, new_modifier)
