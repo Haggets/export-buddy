@@ -3,8 +3,9 @@ from bpy.types import Modifier, Object, Operator
 
 from .debug import DEBUG_measure_execution_time, print_colored
 from .hashes import get_vertices_hash
-from .mesh import copy_collapsed_basis, create_linked_duplicate
+from .mesh import copy_collapsed_basis
 from .modifiers import handle_decimate_modifier, transfer_unapplied_modifiers
+from .object import create_linked_duplicate
 
 
 def linked_duplicate_per_shapekey(object: Object) -> dict[str, Object | None]:

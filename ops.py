@@ -48,6 +48,7 @@ class EB_OT_apply_and_merge(Operator):
                 collapsed_object = copy_with_modifiers_applied(
                     self, object, skipped_modifiers
                 )
+                handle_object_materials(object, collapsed_object)
                 object.hide_set(True)
 
                 if (
@@ -62,8 +63,6 @@ class EB_OT_apply_and_merge(Operator):
             focus_object(active_reference)
             if len(collapsed_objects) > 1:
                 merge_meshes(active_reference, collapsed_objects)
-
-        handle_object_materials(active_object, active_reference)
 
         # Shouldn't happen
         if not active_reference:
