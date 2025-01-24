@@ -46,6 +46,8 @@ def insert_shapekeys_from_duplicates(self: Operator, target_object: Object, shap
         if not len(shape_key.points) == len(collapsed_mesh.vertices):
             shapekeys_lost.append(name)
             print(f"Mismatching vertex count for shapekey {name}! Shapekey lost.")
+            shaped_object.to_mesh_clear()
+
             continue
 
         print(f"Applying shapekey {name}")
