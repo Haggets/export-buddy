@@ -69,10 +69,14 @@ class EB_OT_apply_and_merge(Operator):
             if len(collapsed_objects) > 1:
                 merge_meshes(active_result, collapsed_objects)
 
+        # Changes the active object name so it doesn't collide with the collapsed object
+        active_object.name = active_object.name + "_original"
+        active_object.data.name = active_object.data.name + "_original"
+        # Better safe than sorry
+        active_object.data.use_fake_user = True
+
         for object in selected_objects:
             object["eb_linked_object"] = active_result
-            object.name = object.name + "_original"
-            object.data.name = object.data.name + "_original"
 
         active_result.name = active_name
         active_result.data.name = active_data_name
@@ -101,7 +105,11 @@ class EB_OT_revert_apply_and_merge(Operator):
 
     def execute(self, context: Context):
         active_object: Object = context.object
-        linked_objects = []
+        active_name = active_object.name
+        linked_objects: list[Object] = []
+
+        active_object.data.use_fake_user = True
+
         for object in bpy.data.objects:
             if not object.get("eb_linked_object"):
                 continue
@@ -113,12 +121,14 @@ class EB_OT_revert_apply_and_merge(Operator):
         bpy.data.meshes.remove(active_object.data)
 
         for object in linked_objects:
-            object.name = object.name.replace("_original", "")
-            object.data.name = object.data.name.replace("_original", "")
+            if object.name.replace("_original", "") == active_name:
+                object.name = object.name.replace("_original", "")
+                object.data.name = object.data.name.replace("_original", "")
+                context.view_layer.objects.active = object
 
             object.hide_set(False)
             object.select_set(True)
-            context.view_layer.objects.active = object
+            del object["eb_linked_object"]
 
         return {"FINISHED"}
 
