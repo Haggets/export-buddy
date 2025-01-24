@@ -13,6 +13,7 @@ class EB_PT_mainpanel(Panel):
         layout = self.layout
         col = layout.column(align=True)
         col.operator("eb.apply_and_merge")
+        col.operator("eb.revert_apply_and_merge")
 
 
 def register_ui():
