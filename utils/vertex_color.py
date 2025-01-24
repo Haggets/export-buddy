@@ -1,9 +1,7 @@
 from bpy.types import MeshLoopColorLayer, Object
 
 
-def apply_vertex_color(
-    object: Object, color: tuple[float, float, float]
-) -> MeshLoopColorLayer:
+def apply_vertex_color(object: Object, color: tuple[float, float, float]) -> MeshLoopColorLayer:
     mesh = object.data
     if not (color_layer := mesh.vertex_colors.get("Attribute")):
         color_layer = mesh.vertex_colors.new(name="Attribute")

@@ -12,9 +12,7 @@ def DEBUG_measure_execution_time(name: str = ""):
 
     time_start = time.time()
     yield
-    print_colored(
-        f"{name} time: {round(time.time() - time_start, 3)} seconds", color_code=33
-    )
+    print_colored(f"{name} time: {round(time.time() - time_start, 3)} seconds", color_code=33)
 
 
 def DEBUG_viewport_snapshot():

@@ -31,9 +31,7 @@ def linked_duplicate_per_shapekey(object: Object) -> dict[str, Object | None]:
     return shaped_objects
 
 
-def insert_shapekeys_from_duplicates(
-    self: Operator, target_object: Object, shaped_objects: dict[str, Object | None]
-):
+def insert_shapekeys_from_duplicates(self: Operator, target_object: Object, shaped_objects: dict[str, Object | None]):
     """Create a new object for each duplicate object with the shapekey and modifiers applied, and then send the data to the reference object's shapekey"""
     depsgraph = bpy.context.evaluated_depsgraph_get()
     shapekeys_lost = []
@@ -51,9 +49,7 @@ def insert_shapekeys_from_duplicates(
             continue
 
         print(f"Applying shapekey {name}")
-        collapsed_coordinates = [
-            coord for vertex in collapsed_mesh.vertices for coord in vertex.co
-        ]
+        collapsed_coordinates = [coord for vertex in collapsed_mesh.vertices for coord in vertex.co]
         shape_key.points.foreach_set("co", collapsed_coordinates)
 
         shaped_object.to_mesh_clear()
@@ -79,9 +75,7 @@ def copy_with_modifiers_applied(
     # No modifiers to apply
     if not len(applied_modifiers):
         self.report({"WARNING"}, f"No modifiers to apply on {object.name}!")
-        collapsed_reference = bpy.data.objects.new(
-            object.name + "_collapsed", object.data
-        )
+        collapsed_reference = bpy.data.objects.new(object.name + "_collapsed", object.data)
         collapsed_reference.matrix_world = object.matrix_world
         bpy.context.collection.objects.link(collapsed_reference)
 
@@ -124,9 +118,7 @@ def copy_with_modifiers_applied(
         insert_shapekeys_from_duplicates(self, collapsed_reference, shaped_objects)
 
     handle_decimate_modifier(collapsed_reference, applied_modifiers)
-    print_colored(
-        f"Finished applying shapekeys to {collapsed_reference.name}", color_code=32
-    )
+    print_colored(f"Finished applying shapekeys to {collapsed_reference.name}", color_code=32)
 
     # Restores skipped modifiers
     transfer_unapplied_modifiers(collapsed_reference, unapplied_modifiers)

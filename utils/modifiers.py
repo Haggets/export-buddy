@@ -78,9 +78,7 @@ def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
 def handle_weld_modifier(object: Object, modifers: list[Modifier]): ...
 
 
-def transfer_unapplied_modifiers(
-    target: Object, unapplied_modifiers: list[Modifier | None]
-):
+def transfer_unapplied_modifiers(target: Object, unapplied_modifiers: list[Modifier | None]):
     """Transfer modifiers from source to target object"""
     for modifier in unapplied_modifiers:
         if not modifier:

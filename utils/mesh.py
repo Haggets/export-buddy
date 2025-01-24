@@ -18,8 +18,6 @@ def merge_meshes(main_object: Object, objects_to_merge: list[Object]):
 def copy_collapsed_basis(object: Object):
     depsgraph = bpy.context.evaluated_depsgraph_get()
     reference_mesh = create_collapsed_mesh(depsgraph, object)
-    collapsed_reference = bpy.data.objects.new(
-        object.name + "_collapsed", reference_mesh
-    )
+    collapsed_reference = bpy.data.objects.new(object.name + "_collapsed", reference_mesh)
     collapsed_reference.matrix_world = object.matrix_world
     return collapsed_reference

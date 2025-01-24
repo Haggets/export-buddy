@@ -45,16 +45,11 @@ class EB_OT_apply_and_merge(Operator):
 
                 check_incompatible_modifiers(self, object)
 
-                collapsed_object = copy_with_modifiers_applied(
-                    self, object, skipped_modifiers
-                )
+                collapsed_object = copy_with_modifiers_applied(self, object, skipped_modifiers)
                 handle_object_materials(object, collapsed_object)
                 object.hide_set(True)
 
-                if (
-                    collapsed_object.name.replace("_collapsed", "")
-                    == active_object.name
-                ):
+                if collapsed_object.name.replace("_collapsed", "") == active_object.name:
                     active_reference = collapsed_object
                     continue
 
