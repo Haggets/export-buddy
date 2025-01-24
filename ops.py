@@ -13,7 +13,7 @@ from .utils.shapekeys import copy_with_modifiers_applied
 
 class EB_OT_apply_and_merge(Operator):
     bl_idname = "eb.apply_and_merge"
-    bl_label = "Apply Modifiers & Merge to Active"
+    bl_label = "Apply Modifiers and Merge to Active"
 
     @classmethod
     def poll(cls, context: Context):
@@ -93,7 +93,7 @@ class EB_OT_apply_and_merge(Operator):
 
 class EB_OT_revert_apply_and_merge(Operator):
     bl_idname = "eb.revert_apply_and_merge"
-    bl_label = "Revert Apply & Merge"
+    bl_label = "Revert Apply and Merge"
 
     @classmethod
     def poll(cls, context: Context):
@@ -111,7 +111,7 @@ class EB_OT_revert_apply_and_merge(Operator):
         active_name = active_object.name
         linked_objects: list[Object] = []
 
-        active_object.data.use_fake_user = True
+        active_object.data.use_fake_user = False
 
         for object in bpy.data.objects:
             if not object.get("eb_linked_object"):
