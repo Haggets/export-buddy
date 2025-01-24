@@ -111,8 +111,6 @@ class EB_OT_revert_apply_and_merge(Operator):
         active_name = active_object.name
         linked_objects: list[Object] = []
 
-        active_object.data.use_fake_user = False
-
         for object in bpy.data.objects:
             if not object.get("eb_linked_object"):
                 continue
@@ -125,6 +123,8 @@ class EB_OT_revert_apply_and_merge(Operator):
 
         for object in linked_objects:
             if object.name.replace("_original", "") == active_name:
+                object.data.use_fake_user = False
+
                 object.name = object.name.replace("_original", "")
                 object.data.name = object.data.name.replace("_original", "")
                 context.view_layer.objects.active = object
