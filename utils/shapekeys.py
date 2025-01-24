@@ -75,13 +75,15 @@ def copy_with_modifiers_applied(
     # No modifiers to apply
     if not len(applied_modifiers):
         self.report({"WARNING"}, f"No modifiers to apply on {object.name}!")
-        collapsed_reference = bpy.data.objects.new(object.name + "_collapsed", object.data)
-        collapsed_reference.matrix_world = object.matrix_world
-        bpy.context.collection.objects.link(collapsed_reference)
+        mesh_copy = object.data.copy()
+        mesh_copy.name = object.data.name + "_collapsed"
+        object_copy = bpy.data.objects.new(object.name + "_collapsed", mesh_copy)
+        object_copy.matrix_world = object.matrix_world
+        bpy.context.collection.objects.link(object_copy)
 
-        transfer_unapplied_modifiers(collapsed_reference, unapplied_modifiers)
+        transfer_unapplied_modifiers(object_copy, unapplied_modifiers)
 
-        return collapsed_reference
+        return object_copy
 
     decimate_modifier = None
     # Decimate gets applied last

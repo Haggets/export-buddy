@@ -22,14 +22,21 @@ class EB_OT_apply_and_merge(Operator):
             return
         if context.object.type != "MESH":
             return
+        if context.object.get("eb_collapsed"):
+            return
 
         return True
 
     def execute(self, context):
+        selected_objects = [object for object in context.selected_objects if object.type == "MESH"]
+
         active_object: Object = context.object
-        active_reference: Object
+        active_name = active_object.name
+        active_data_name = active_object.data.name
+
+        active_result: Object
         collapsed_objects = []
-        selected_objects = context.selected_objects
+
         with DEBUG_measure_execution_time("Accumulate apply and merge"):
             for object in selected_objects:
                 if object.type != "MESH":
@@ -53,20 +60,24 @@ class EB_OT_apply_and_merge(Operator):
                 object.hide_set(True)
 
                 if collapsed_object.name.replace("_collapsed", "") == active_object.name:
-                    active_reference = collapsed_object
+                    active_result = collapsed_object
                     continue
 
                 collapsed_objects.append(collapsed_object)
 
-            for object in selected_objects:
-                object["eb_linked_object"] = active_reference
-
-            focus_object(active_reference)
+            focus_object(active_result)
             if len(collapsed_objects) > 1:
-                merge_meshes(active_reference, collapsed_objects)
+                merge_meshes(active_result, collapsed_objects)
 
-        active_reference.active_shape_key_index = 0
-        active_reference["eb_collapsed"] = True
+        for object in selected_objects:
+            object["eb_linked_object"] = active_result
+            object.name = object.name + "_original"
+            object.data.name = object.data.name + "_original"
+
+        active_result.name = active_name
+        active_result.data.name = active_data_name
+        active_result.active_shape_key_index = 0
+        active_result["eb_collapsed"] = True
 
         self.report({"INFO"}, "Modifiers applied and objects merged.")
 
@@ -90,17 +101,24 @@ class EB_OT_revert_apply_and_merge(Operator):
 
     def execute(self, context: Context):
         active_object: Object = context.object
+        linked_objects = []
         for object in bpy.data.objects:
             if not object.get("eb_linked_object"):
                 continue
             if not object.get("eb_linked_object") == active_object:
                 continue
 
+            linked_objects.append(object)
+
+        bpy.data.meshes.remove(active_object.data)
+
+        for object in linked_objects:
+            object.name = object.name.replace("_original", "")
+            object.data.name = object.data.name.replace("_original", "")
+
             object.hide_set(False)
             object.select_set(True)
             context.view_layer.objects.active = object
-
-        bpy.data.meshes.remove(active_object.data)
 
         return {"FINISHED"}
 
