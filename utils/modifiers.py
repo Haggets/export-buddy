@@ -1,7 +1,7 @@
 import bpy
 from bpy.types import DecimateModifier, Modifier, Object, Operator
 
-from .others import transfer_attributes
+from .attributes import transfer_attributes
 from .scene import change_mode, focus_object, select_objects
 
 
@@ -36,7 +36,7 @@ def check_incompatible_modifiers(self: Operator, object: Object):
 
 def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
     """Apply decimate modifier to object"""
-
+    # TODO: handle multiple ones
     decimate_modifier = None
     for modifier in modifiers:
         if modifier.type != "DECIMATE":
@@ -72,6 +72,9 @@ def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
     change_mode(current_mode)
     focus_object(active_object)
     select_objects(selected_objects)
+
+
+def handle_weld_modifier(object: Object, modifers: list[Modifier]): ...
 
 
 def transfer_unapplied_modifiers(

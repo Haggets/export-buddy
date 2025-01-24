@@ -2,6 +2,7 @@ from bpy.types import Context, Object, Operator
 from bpy.utils import register_class, unregister_class
 
 from .utils.debug import DEBUG_measure_execution_time
+from .utils.materials import handle_object_materials
 from .utils.mesh import merge_meshes
 from .utils.modifiers import check_incompatible_modifiers
 from .utils.scene import focus_object
@@ -61,6 +62,8 @@ class EB_OT_apply_and_merge(Operator):
             focus_object(active_reference)
             if len(collapsed_objects) > 1:
                 merge_meshes(active_reference, collapsed_objects)
+
+        handle_object_materials(active_object, active_reference)
 
         # Shouldn't happen
         if not active_reference:
