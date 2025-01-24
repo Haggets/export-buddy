@@ -1,7 +1,7 @@
 import bpy
 from bpy.types import DecimateModifier, Modifier, Object, Operator
 
-from .others import is_attribute_read_only
+from .others import transfer_attributes
 from .scene import change_mode, focus_object, select_objects
 
 
@@ -82,13 +82,7 @@ def transfer_unapplied_modifiers(
         if not modifier:
             continue
 
-        modifier.show_viewport = True
-
         new_modifier = target.modifiers.new(name=modifier.name, type=modifier.type)
-        for key in dir(modifier):
-            if is_attribute_read_only(modifier, key):
-                continue
-
-            setattr(new_modifier, key, getattr(modifier, key))
+        transfer_attributes(modifier, new_modifier)
 
     return target

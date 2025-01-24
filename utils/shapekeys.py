@@ -69,9 +69,6 @@ def copy_with_modifiers_applied(
 ) -> Object:
     applied_modifiers: list[Modifier] = object.modifiers[:]
     for modifier in unapplied_modifiers:
-        if not modifier:
-            continue
-
         try:
             applied_modifiers.remove(modifier)
         except ValueError:
@@ -92,6 +89,13 @@ def copy_with_modifiers_applied(
 
         return collapsed_reference
 
+    decimate_modifier = None
+    # Decimate gets applied last
+    for modifier in applied_modifiers:
+        if modifier.type == "DECIMATE":
+            modifier.show_viewport = False
+            decimate_modifier = modifier
+
     object.show_only_shape_key = True
     object.active_shape_key_index = 0
     collapsed_reference = copy_collapsed_basis(object)
@@ -106,6 +110,9 @@ def copy_with_modifiers_applied(
         transfer_unapplied_modifiers(collapsed_reference, unapplied_modifiers)
 
         handle_decimate_modifier(collapsed_reference, applied_modifiers)
+
+        if decimate_modifier:
+            decimate_modifier.show_viewport = True
 
         return collapsed_reference
 
@@ -125,10 +132,10 @@ def copy_with_modifiers_applied(
     transfer_unapplied_modifiers(collapsed_reference, unapplied_modifiers)
 
     for modifier in unapplied_modifiers:
-        if not modifier:
-            continue
-
         modifier.show_viewport = True
+
+    if decimate_modifier:
+        decimate_modifier.show_viewport = True
 
     # Removes leftovers
     for shaped_object in shaped_objects.values():
