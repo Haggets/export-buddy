@@ -11,6 +11,7 @@ def create_linked_duplicate(object: Object, suffix: str) -> Object:
     return duplicate_object
 
 
-def transfer_object_properties(source: Object, target: Object):
+def transfer_object_properties(source: Object, target: Object, ignored_attrs: list[str] = []):
     """Transfer properties from source to target object"""
-    transfer_attributes(source, target)
+
+    transfer_attributes(source, target, ignored_attrs)

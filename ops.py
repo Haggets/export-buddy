@@ -6,6 +6,7 @@ from .utils.debug import DEBUG_measure_execution_time
 from .utils.materials import handle_object_materials
 from .utils.mesh import merge_meshes
 from .utils.modifiers import check_incompatible_modifiers
+from .utils.object import transfer_object_properties
 from .utils.scene import focus_object
 from .utils.shapekeys import copy_with_modifiers_applied
 
@@ -77,6 +78,8 @@ class EB_OT_apply_and_merge(Operator):
 
         for object in selected_objects:
             object["eb_linked_object"] = active_result
+
+        transfer_object_properties(active_object, active_result, ["name", "data", "active_shape_key_index"])
 
         active_result.name = active_name
         active_result.data.name = active_data_name

@@ -113,6 +113,7 @@ def copy_with_modifiers_applied(
         return collapsed_reference
 
     # TODO: Do it in batches of 10 shapekeys for very intensive models
+    print_colored(f"Applying shapekeys to {collapsed_reference.name}", color_code=33)
     with DEBUG_measure_execution_time("Creating duplicates"):
         shaped_objects = linked_duplicate_per_shapekey(object)
 
