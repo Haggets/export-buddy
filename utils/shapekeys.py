@@ -44,7 +44,6 @@ def insert_shapekeys_from_duplicates(
 
         collapsed_mesh = shaped_object.evaluated_get(depsgraph).to_mesh()
 
-        print(len(collapsed_mesh.vertices), len(shape_key.points))
         if not len(shape_key.points) == len(collapsed_mesh.vertices):
             shapekeys_lost.append(name)
             print(f"Mismatching vertex count for shapekey {name}! Shapekey lost.")

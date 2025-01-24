@@ -74,6 +74,7 @@ def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
     select_objects(selected_objects)
 
 
+# TODO
 def handle_weld_modifier(object: Object, modifers: list[Modifier]): ...
 
 

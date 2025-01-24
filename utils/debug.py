@@ -6,7 +6,7 @@ import bpy
 
 @contextmanager
 def DEBUG_measure_execution_time(name: str = ""):
-    """Debug function. Measures time it takes to execute a set of operations. Used with the with keyword."""
+    """Debug function. Measures time it takes to execute a set of operations. Used with the 'with' keyword."""
     if not name:
         name = "Execution"
 
