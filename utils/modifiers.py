@@ -38,12 +38,12 @@ def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
     """Apply decimate modifier to object"""
     # TODO: handle multiple ones
     # TODO: handle unsubdivide decimate
-    decimate_modifier = None
+    decimate_modifier: DecimateModifier | None = None
     for modifier in modifiers:
-        if modifier.type != "DECIMATE":
+        if not isinstance(modifier, DecimateModifier):
             continue
 
-        decimate_modifier: DecimateModifier = modifier
+        decimate_modifier = modifier
 
     if not decimate_modifier:
         return
@@ -51,6 +51,8 @@ def handle_decimate_modifier(object: Object, modifiers: list[Modifier]):
     current_mode = object.mode
     selected_objects = bpy.context.selected_objects
     active_object = bpy.context.object
+    if not active_object:
+        raise ValueError("Active object is not defined")
 
     focus_object(object)
     bpy.context.view_layer.objects.active = object
@@ -93,3 +95,19 @@ def transfer_unapplied_modifiers(target: Object, unapplied_modifiers: list[Modif
         transfer_attributes(modifier, new_modifier)
 
     return target
+
+
+def handle_hidden_modifiers(object) -> list[Modifier | None]:
+    """Marks all viewport hidden modifiers as skipped for the process to stay as viewport accurate as possible"""
+    skipped_modifiers = []
+
+    for modifier in object.modifiers:
+        if not modifier.show_viewport:
+            skipped_modifiers.append(modifier)
+            continue
+
+        if modifier.type == "ARMATURE":
+            skipped_modifiers.append(modifier)
+            continue
+
+    return skipped_modifiers

@@ -20,7 +20,7 @@ def DEBUG_viewport_snapshot():
     bpy.ops.wm.redraw_timer(type="DRAW_WIN_SWAP", iterations=1)
 
 
-def print_colored(*args, color_code: str):
+def print_colored(*args, color_code: int):
     """Prints colored text to console, similar to the built-in print function"""
     text = " ".join(map(str, args))
     print(f"\033[{color_code}m{text}\033[0m")

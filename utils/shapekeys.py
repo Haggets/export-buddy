@@ -63,14 +63,15 @@ def insert_shapekeys_from_duplicates(self: Operator, target_object: Object, shap
 
 
 def copy_with_modifiers_applied(
-    self: Operator, object: Object, unapplied_modifiers: list[Modifier] | None = None
+    self: Operator, object: Object, unapplied_modifiers: list[Modifier | None] = []
 ) -> Object:
-    applied_modifiers: list[Modifier] = object.modifiers[:]
+    applied_modifiers: list[Modifier] = list(object.modifiers)
+
     for modifier in unapplied_modifiers:
-        try:
-            applied_modifiers.remove(modifier)
-        except ValueError:
-            pass
+        if not modifier:
+            continue
+
+        applied_modifiers.remove(modifier)
 
         modifier.show_viewport = False
 
